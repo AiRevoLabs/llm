@@ -1,0 +1,26 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile.llm"
+
+[deploy]
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+# Environment variables
+[deploy.variables]
+OLLAMA_HOST = "0.0.0.0"
+OLLAMA_KEEP_ALIVE = "24h"
+
+# Optimized for your 32GB Railway plan
+[deploy.resources]
+memory = 16384  # 16GB (half your allocation for excellent performance)
+cpu = 8000      # 8 vCPU (quarter of your allocation for fast responses)
+
+# Health check configuration
+[deploy.healthCheck]
+path = "/api/version"
+initialDelaySeconds = 120  # Model loading takes time
+periodSeconds = 30
+timeoutSeconds = 15
+successThreshold = 1
+failureThreshold = 3

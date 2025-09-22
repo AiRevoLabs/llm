@@ -1,0 +1,95 @@
+FROM ollama/ollama:latest
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Create directories
+WORKDIR /app
+RUN mkdir -p /app/model
+
+# Download model files from Hugging Face
+RUN echo "📥 Downloading model files from Hugging Face..."
+RUN curl -L -o /app/model/model-00001-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00001-of-00003.safetensors"
+RUN curl -L -o /app/model/model-00002-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00002-of-00003.safetensors"
+RUN curl -L -o /app/model/model-00003-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00003-of-00003.safetensors"
+RUN curl -L -o /app/model/config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/config.json"
+RUN curl -L -o /app/model/tokenizer.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer.json"
+RUN curl -L -o /app/model/tokenizer_config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer_config.json"
+RUN curl -L -o /app/model/model.safetensors.index.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model.safetensors.index.json"
+RUN curl -L -o /app/model/generation_config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/generation_config.json"
+RUN curl -L -o /app/model/special_tokens_map.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/special_tokens_map.json"
+RUN curl -L -o /app/model/added_tokens.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/added_tokens.json"
+RUN curl -L -o /app/model/merges.txt "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/merges.txt"
+RUN curl -L -o /app/model/vocab.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/vocab.json"
+RUN echo "✅ Model files downloaded successfully"
+
+# Create Ollama Modelfile
+RUN cat > /app/Modelfile << 'EOF'
+FROM /app/model
+
+TEMPLATE """<|im_start|>system
+You are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job search guidance.<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+"""
+
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
+EOF
+
+# Create startup script
+RUN cat > /app/start.sh << 'EOF'
+#!/bin/bash
+set -e
+
+echo "🚀 Starting Ollama..."
+
+# Start Ollama server in background
+ollama serve &
+OLLAMA_PID=$!
+
+# Wait for Ollama to be ready
+echo "⏳ Waiting for Ollama..."
+timeout=60
+while ! curl -s http://localhost:11434/api/version > /dev/null; do
+    sleep 2
+    timeout=$((timeout - 2))
+    if [ $timeout -le 0 ]; then
+        echo "❌ Timeout waiting for Ollama"
+        exit 1
+    fi
+done
+
+echo "✅ Ollama ready!"
+
+# Create model
+echo "📦 Creating qwen-career model..."
+ollama create qwen-career -f /app/Modelfile
+
+echo "🧪 Testing model..."
+echo "Hello!" | ollama run qwen-career
+
+echo "🎉 Model ready! API available at http://localhost:11434"
+
+# Keep running
+wait $OLLAMA_PID
+EOF
+
+RUN chmod +x /app/start.sh
+
+# Expose port
+EXPOSE 11434
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:11434/api/version || exit 1
+
+# Set environment
+ENV OLLAMA_HOST=0.0.0.0
+
+# Start
+CMD ["/app/start.sh"]

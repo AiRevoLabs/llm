@@ -1,0 +1,19 @@
+# Exclude large model directories except optimized gguf
+GPU/
+gguf/
+
+# Exclude specific file types except in Opyimized gguf folder
+*.bin
+*.pt
+*.safetensors
+*.weights
+*.model
+
+# Allow optimized gguf folder and its contents
+!"Opyimized gguf"/
+!"Opyimized gguf"/*
+
+# Exclude hidden files
+.git
+.gitignore
+*.md
