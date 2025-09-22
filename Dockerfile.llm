@@ -15,78 +15,56 @@ FROM ollama/ollama:latest
   "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00002-of-00003.safetensors"
   RUN curl -L -o /app/model/model-00003-of-00003.safetensors
   "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00003-of-00003.safetensors"
-  RUN curl -L -o /app/model/config.json
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/config.json"
-  RUN curl -L -o /app/model/tokenizer.json
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer.json"
-  RUN curl -L -o /app/model/tokenizer_config.json
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer_config.json"
+  RUN curl -L -o /app/model/config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/config.json"
+  RUN curl -L -o /app/model/tokenizer.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer.json"
+  RUN curl -L -o /app/model/tokenizer_config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer_config.json"
   RUN curl -L -o /app/model/model.safetensors.index.json
   "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model.safetensors.index.json"
-  RUN curl -L -o /app/model/generation_config.json
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/generation_config.json"
-  RUN curl -L -o /app/model/special_tokens_map.json
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/special_tokens_map.json"
-  RUN curl -L -o /app/model/added_tokens.json
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/added_tokens.json"
-  RUN curl -L -o /app/model/merges.txt
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/merges.txt"
-  RUN curl -L -o /app/model/vocab.json
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/vocab.json"
+  RUN curl -L -o /app/model/generation_config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/generation_config.json"
+  RUN curl -L -o /app/model/special_tokens_map.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/special_tokens_map.json"
+  RUN curl -L -o /app/model/added_tokens.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/added_tokens.json"
+  RUN curl -L -o /app/model/merges.txt "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/merges.txt"
+  RUN curl -L -o /app/model/vocab.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/vocab.json"
   RUN echo "✅ Model files downloaded successfully"
 
-  # Create Ollama Modelfile with proper escaping
-  RUN echo 'FROM /app/model' > /app/Modelfile && \
-      echo '' >> /app/Modelfile && \
-      echo 'TEMPLATE """<|im_start|>system' >> /app/Modelfile && \
-      echo 'You are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job
-  search guidance.<|im_end|>' >> /app/Modelfile && \
-      echo '<|im_start|>user' >> /app/Modelfile && \
-      echo '{{ .Prompt }}<|im_end|>' >> /app/Modelfile && \
-      echo '<|im_start|>assistant' >> /app/Modelfile && \
-      echo '"""' >> /app/Modelfile && \
-      echo '' >> /app/Modelfile && \
-      echo 'PARAMETER temperature 0.7' >> /app/Modelfile && \
-      echo 'PARAMETER top_p 0.9' >> /app/Modelfile && \
-      echo 'PARAMETER top_k 40' >> /app/Modelfile && \
-      echo 'PARAMETER stop "<|im_start|>"' >> /app/Modelfile && \
-      echo 'PARAMETER stop "<|im_end|>"' >> /app/Modelfile
+  # Create Ollama Modelfile
+  RUN echo 'FROM /app/model' > /app/Modelfile
+  RUN echo 'TEMPLATE """<|im_start|>system' >> /app/Modelfile
+  RUN echo 'You are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job search guidance.<|im_end|>' >>
+  /app/Modelfile
+  RUN echo '<|im_start|>user' >> /app/Modelfile
+  RUN echo '{{ .Prompt }}<|im_end|>' >> /app/Modelfile
+  RUN echo '<|im_start|>assistant' >> /app/Modelfile
+  RUN echo '"""' >> /app/Modelfile
+  RUN echo 'PARAMETER temperature 0.7' >> /app/Modelfile
+  RUN echo 'PARAMETER top_p 0.9' >> /app/Modelfile
+  RUN echo 'PARAMETER top_k 40' >> /app/Modelfile
+  RUN echo 'PARAMETER stop "<|im_start|>"' >> /app/Modelfile
+  RUN echo 'PARAMETER stop "<|im_end|>"' >> /app/Modelfile
 
   # Create startup script
-  RUN echo '#!/bin/bash' > /app/start.sh && \
-      echo 'set -e' >> /app/start.sh && \
-      echo '' >> /app/start.sh && \
-      echo 'echo "🚀 Starting Ollama..."' >> /app/start.sh && \
-      echo '' >> /app/start.sh && \
-      echo '# Start Ollama server in background' >> /app/start.sh && \
-      echo 'ollama serve &' >> /app/start.sh && \
-      echo 'OLLAMA_PID=$!' >> /app/start.sh && \
-      echo '' >> /app/start.sh && \
-      echo '# Wait for Ollama to be ready' >> /app/start.sh && \
-      echo 'echo "⏳ Waiting for Ollama..."' >> /app/start.sh && \
-      echo 'timeout=60' >> /app/start.sh && \
-      echo 'while ! curl -s http://localhost:11434/api/version > /dev/null; do' >> /app/start.sh && \
-      echo '    sleep 2' >> /app/start.sh && \
-      echo '    timeout=$((timeout - 2))' >> /app/start.sh && \
-      echo '    if [ $timeout -le 0 ]; then' >> /app/start.sh && \
-      echo '        echo "❌ Timeout waiting for Ollama"' >> /app/start.sh && \
-      echo '        exit 1' >> /app/start.sh && \
-      echo '    fi' >> /app/start.sh && \
-      echo 'done' >> /app/start.sh && \
-      echo '' >> /app/start.sh && \
-      echo 'echo "✅ Ollama ready!"' >> /app/start.sh && \
-      echo '' >> /app/start.sh && \
-      echo '# Create model' >> /app/start.sh && \
-      echo 'echo "📦 Creating qwen-career model..."' >> /app/start.sh && \
-      echo 'ollama create qwen-career -f /app/Modelfile' >> /app/start.sh && \
-      echo '' >> /app/start.sh && \
-      echo 'echo "🧪 Testing model..."' >> /app/start.sh && \
-      echo 'echo "Hello!" | ollama run qwen-career' >> /app/start.sh && \
-      echo '' >> /app/start.sh && \
-      echo 'echo "🎉 Model ready! API available at http://localhost:11434"' >> /app/start.sh && \
-      echo '' >> /app/start.sh && \
-      echo '# Keep running' >> /app/start.sh && \
-      echo 'wait $OLLAMA_PID' >> /app/start.sh
+  RUN echo '#!/bin/bash' > /app/start.sh
+  RUN echo 'set -e' >> /app/start.sh
+  RUN echo 'echo "🚀 Starting Ollama..."' >> /app/start.sh
+  RUN echo 'ollama serve &' >> /app/start.sh
+  RUN echo 'OLLAMA_PID=$!' >> /app/start.sh
+  RUN echo 'echo "⏳ Waiting for Ollama..."' >> /app/start.sh
+  RUN echo 'timeout=60' >> /app/start.sh
+  RUN echo 'while ! curl -s http://localhost:11434/api/version > /dev/null; do' >> /app/start.sh
+  RUN echo '    sleep 2' >> /app/start.sh
+  RUN echo '    timeout=$((timeout - 2))' >> /app/start.sh
+  RUN echo '    if [ $timeout -le 0 ]; then' >> /app/start.sh
+  RUN echo '        echo "❌ Timeout waiting for Ollama"' >> /app/start.sh
+  RUN echo '        exit 1' >> /app/start.sh
+  RUN echo '    fi' >> /app/start.sh
+  RUN echo 'done' >> /app/start.sh
+  RUN echo 'echo "✅ Ollama ready!"' >> /app/start.sh
+  RUN echo 'echo "📦 Creating qwen-career model..."' >> /app/start.sh
+  RUN echo 'ollama create qwen-career -f /app/Modelfile' >> /app/start.sh
+  RUN echo 'echo "🧪 Testing model..."' >> /app/start.sh
+  RUN echo 'echo "Hello!" | ollama run qwen-career' >> /app/start.sh
+  RUN echo 'echo "🎉 Model ready! API available at http://localhost:11434"' >> /app/start.sh
+  RUN echo 'wait $OLLAMA_PID' >> /app/start.sh
 
   RUN chmod +x /app/start.sh
 
