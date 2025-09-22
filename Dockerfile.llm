@@ -9,17 +9,13 @@ FROM ollama/ollama:latest
 
   # Download model files from Hugging Face
   RUN echo "📥 Downloading model files from Hugging Face..."
-  RUN curl -L -o /app/model/model-00001-of-00003.safetensors
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00001-of-00003.safetensors"
-  RUN curl -L -o /app/model/model-00002-of-00003.safetensors
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00002-of-00003.safetensors"
-  RUN curl -L -o /app/model/model-00003-of-00003.safetensors
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00003-of-00003.safetensors"
+  RUN curl -L -o /app/model/model-00001-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00001-of-00003.safetensors"
+  RUN curl -L -o /app/model/model-00002-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00002-of-00003.safetensors"
+  RUN curl -L -o /app/model/model-00003-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00003-of-00003.safetensors"
   RUN curl -L -o /app/model/config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/config.json"
   RUN curl -L -o /app/model/tokenizer.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer.json"
   RUN curl -L -o /app/model/tokenizer_config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer_config.json"
-  RUN curl -L -o /app/model/model.safetensors.index.json
-  "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model.safetensors.index.json"
+  RUN curl -L -o /app/model/model.safetensors.index.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model.safetensors.index.json"
   RUN curl -L -o /app/model/generation_config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/generation_config.json"
   RUN curl -L -o /app/model/special_tokens_map.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/special_tokens_map.json"
   RUN curl -L -o /app/model/added_tokens.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/added_tokens.json"
@@ -30,8 +26,7 @@ FROM ollama/ollama:latest
   # Create Ollama Modelfile
   RUN echo 'FROM /app/model' > /app/Modelfile
   RUN echo 'TEMPLATE """<|im_start|>system' >> /app/Modelfile
-  RUN echo 'You are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job search guidance.<|im_end|>' >>
-  /app/Modelfile
+  RUN echo 'You are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job search guidance.<|im_end|>' >> /app/Modelfile
   RUN echo '<|im_start|>user' >> /app/Modelfile
   RUN echo '{{ .Prompt }}<|im_end|>' >> /app/Modelfile
   RUN echo '<|im_start|>assistant' >> /app/Modelfile
