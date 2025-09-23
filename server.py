@@ -32,22 +32,17 @@ class ChatRequest(BaseModel):
 def load_model():
     global llm
     if llm is None:
-        print("🔄 Loading model...")
-        # Try to load the model from safetensors
+        print("🔄 Loading GGUF model...")
         try:
             llm = Llama(
-                model_path="/app/model",
+                model_path="/app/model/qwen-career.gguf",
                 n_ctx=2048,
                 n_threads=4,
                 verbose=False
             )
-            print("✅ Model loaded successfully")
+            print("✅ GGUF model loaded successfully")
         except Exception as e:
             print(f"❌ Error loading model: {e}")
-            # Fallback: try to find a specific model file
-            model_files = [f for f in os.listdir("/app/model") if f.endswith('.safetensors')]
-            if model_files:
-                print(f"📁 Found model files: {model_files}")
             raise HTTPException(status_code=500, detail=f"Failed to load model: {e}")
     return llm
 
