@@ -1,78 +1,181 @@
-FROM ollama/ollama:latest
+FROM ubuntu:22.04
 
-  # Install curl for health checks
-  RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    curl \
+    git \
+    build-essential \
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
 
-  # Create directories
-  WORKDIR /app
-  RUN mkdir -p /app/model
+# Set working directory
+WORKDIR /app
 
-  # Download model files from Hugging Face
-  RUN echo "📥 Downloading model files from Hugging Face..."
-  RUN curl -L -o /app/model/model-00001-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00001-of-00003.safetensors"
-  RUN curl -L -o /app/model/model-00002-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00002-of-00003.safetensors"
-  RUN curl -L -o /app/model/model-00003-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00003-of-00003.safetensors"
-  RUN curl -L -o /app/model/config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/config.json"
-  RUN curl -L -o /app/model/tokenizer.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer.json"
-  RUN curl -L -o /app/model/tokenizer_config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer_config.json"
-  RUN curl -L -o /app/model/model.safetensors.index.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model.safetensors.index.json"
-  RUN curl -L -o /app/model/generation_config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/generation_config.json"
-  RUN curl -L -o /app/model/special_tokens_map.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/special_tokens_map.json"
-  RUN curl -L -o /app/model/added_tokens.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/added_tokens.json"
-  RUN curl -L -o /app/model/merges.txt "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/merges.txt"
-  RUN curl -L -o /app/model/vocab.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/vocab.json"
-  RUN echo "✅ Model files downloaded successfully"
+# Create model directory
+RUN mkdir -p /app/model
 
-  # Create Ollama Modelfile
-  RUN echo 'FROM /app/model' > /app/Modelfile
-  RUN echo 'TEMPLATE """<|im_start|>system' >> /app/Modelfile
-  RUN echo 'You are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job search guidance.<|im_end|>' >> /app/Modelfile
-  RUN echo '<|im_start|>user' >> /app/Modelfile
-  RUN echo '{{ .Prompt }}<|im_end|>' >> /app/Modelfile
-  RUN echo '<|im_start|>assistant' >> /app/Modelfile
-  RUN echo '"""' >> /app/Modelfile
-  RUN echo 'PARAMETER temperature 0.7' >> /app/Modelfile
-  RUN echo 'PARAMETER top_p 0.9' >> /app/Modelfile
-  RUN echo 'PARAMETER top_k 40' >> /app/Modelfile
-  RUN echo 'PARAMETER stop "<|im_start|>"' >> /app/Modelfile
-  RUN echo 'PARAMETER stop "<|im_end|>"' >> /app/Modelfile
+# Download model files from Hugging Face
+RUN echo "📥 Downloading model files from Hugging Face..."
+RUN curl -L -o /app/model/model-00001-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00001-of-00003.safetensors"
+RUN curl -L -o /app/model/model-00002-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00002-of-00003.safetensors"
+RUN curl -L -o /app/model/model-00003-of-00003.safetensors "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model-00003-of-00003.safetensors"
+RUN curl -L -o /app/model/config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/config.json"
+RUN curl -L -o /app/model/tokenizer.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer.json"
+RUN curl -L -o /app/model/tokenizer_config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/tokenizer_config.json"
+RUN curl -L -o /app/model/model.safetensors.index.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/model.safetensors.index.json"
+RUN curl -L -o /app/model/generation_config.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/generation_config.json"
+RUN curl -L -o /app/model/special_tokens_map.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/special_tokens_map.json"
+RUN curl -L -o /app/model/added_tokens.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/added_tokens.json"
+RUN curl -L -o /app/model/merges.txt "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/merges.txt"
+RUN curl -L -o /app/model/vocab.json "https://huggingface.co/Amritansh8/qwen-career-optimized/resolve/main/vocab.json"
+RUN echo "✅ Model files downloaded successfully"
 
-  # Create startup script
-  RUN echo '#!/bin/bash' > /app/start.sh
-  RUN echo 'set -e' >> /app/start.sh
-  RUN echo 'echo "🚀 Starting Ollama..."' >> /app/start.sh
-  RUN echo 'ollama serve &' >> /app/start.sh
-  RUN echo 'OLLAMA_PID=$!' >> /app/start.sh
-  RUN echo 'echo "⏳ Waiting for Ollama..."' >> /app/start.sh
-  RUN echo 'timeout=60' >> /app/start.sh
-  RUN echo 'while ! curl -s http://localhost:11434/api/version > /dev/null; do' >> /app/start.sh
-  RUN echo '    sleep 2' >> /app/start.sh
-  RUN echo '    timeout=$((timeout - 2))' >> /app/start.sh
-  RUN echo '    if [ $timeout -le 0 ]; then' >> /app/start.sh
-  RUN echo '        echo "❌ Timeout waiting for Ollama"' >> /app/start.sh
-  RUN echo '        exit 1' >> /app/start.sh
-  RUN echo '    fi' >> /app/start.sh
-  RUN echo 'done' >> /app/start.sh
-  RUN echo 'echo "✅ Ollama ready!"' >> /app/start.sh
-  RUN echo 'echo "📦 Creating qwen-career model..."' >> /app/start.sh
-  RUN echo 'ollama create qwen-career -f /app/Modelfile' >> /app/start.sh
-  RUN echo 'echo "🧪 Testing model..."' >> /app/start.sh
-  RUN echo 'echo "Hello!" | ollama run qwen-career' >> /app/start.sh
-  RUN echo 'echo "🎉 Model ready! API available at http://localhost:11434"' >> /app/start.sh
-  RUN echo 'wait $OLLAMA_PID' >> /app/start.sh
+# Install Python dependencies
+RUN pip3 install --no-cache-dir \
+    llama-cpp-python \
+    fastapi \
+    uvicorn \
+    transformers \
+    torch
 
-  RUN chmod +x /app/start.sh
+# Create the Python server
+RUN cat > /app/server.py << 'EOF'
+import os
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from llama_cpp import Llama
+import uvicorn
+import json
 
-  # Expose port
-  EXPOSE 11434
+app = FastAPI()
 
-  # Health check
-  HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-      CMD curl -f http://localhost:11434/api/version || exit 1
+# Initialize model (will be loaded on first request)
+llm = None
 
-  # Set environment
-  ENV OLLAMA_HOST=0.0.0.0
+class GenerateRequest(BaseModel):
+    model: str = "qwen-career"
+    prompt: str
+    max_tokens: int = 512
+    temperature: float = 0.7
+    top_p: float = 0.9
+    stop: list = []
 
-  # Start
-  ENTRYPOINT ["/bin/bash"]
-  CMD ["/app/start.sh"]
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    model: str = "qwen-career"
+    messages: list[ChatMessage]
+    max_tokens: int = 512
+    temperature: float = 0.7
+    top_p: float = 0.9
+
+def load_model():
+    global llm
+    if llm is None:
+        print("🔄 Loading model...")
+        # Try to load the model from safetensors
+        try:
+            llm = Llama(
+                model_path="/app/model",
+                n_ctx=2048,
+                n_threads=4,
+                verbose=False
+            )
+            print("✅ Model loaded successfully")
+        except Exception as e:
+            print(f"❌ Error loading model: {e}")
+            # Fallback: try to find a specific model file
+            model_files = [f for f in os.listdir("/app/model") if f.endswith('.safetensors')]
+            if model_files:
+                print(f"📁 Found model files: {model_files}")
+            raise HTTPException(status_code=500, detail=f"Failed to load model: {e}")
+    return llm
+
+@app.get("/")
+async def root():
+    return {"message": "llama.cpp server is running", "status": "ready"}
+
+@app.get("/api/version")
+async def version():
+    return {"version": "llama.cpp-python", "status": "ready"}
+
+@app.post("/api/generate")
+async def generate(request: GenerateRequest):
+    try:
+        model = load_model()
+
+        # Format prompt with career counselor context
+        system_prompt = "You are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job search guidance."
+        formatted_prompt = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{request.prompt}<|im_end|>\n<|im_start|>assistant\n"
+
+        response = model(
+            formatted_prompt,
+            max_tokens=request.max_tokens,
+            temperature=request.temperature,
+            top_p=request.top_p,
+            stop=["<|im_end|>", "<|im_start|>"] + request.stop,
+            echo=False
+        )
+
+        return {
+            "model": request.model,
+            "response": response["choices"][0]["text"].strip(),
+            "done": True
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/chat")
+async def chat(request: ChatRequest):
+    try:
+        model = load_model()
+
+        # Build conversation prompt
+        conversation = "<|im_start|>system\nYou are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job search guidance.<|im_end|>\n"
+
+        for message in request.messages:
+            conversation += f"<|im_start|>{message.role}\n{message.content}<|im_end|>\n"
+
+        conversation += "<|im_start|>assistant\n"
+
+        response = model(
+            conversation,
+            max_tokens=request.max_tokens,
+            temperature=request.temperature,
+            top_p=request.top_p,
+            stop=["<|im_end|>", "<|im_start|>"],
+            echo=False
+        )
+
+        return {
+            "model": request.model,
+            "message": {
+                "role": "assistant",
+                "content": response["choices"][0]["text"].strip()
+            },
+            "done": True
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    print("🚀 Starting llama.cpp server...")
+    uvicorn.run(app, host="0.0.0.0", port=11434)
+EOF
+
+# Make the server executable
+RUN chmod +x /app/server.py
+
+# Expose port
+EXPOSE 11434
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:11434/ || exit 1
+
+# Start the server
+CMD ["python3", "/app/server.py"]
