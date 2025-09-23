@@ -59,16 +59,16 @@ async def generate(request: GenerateRequest):
     try:
         model = load_model()
 
-        # Format prompt with career counselor context
+        # Format prompt with career counselor context - simplified format
         system_prompt = "You are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job search guidance."
-        formatted_prompt = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{request.prompt}<|im_end|>\n<|im_start|>assistant\n"
+        formatted_prompt = f"System: {system_prompt}\n\nUser: {request.prompt}\n\nAssistant:"
 
         response = model(
             formatted_prompt,
             max_tokens=request.max_tokens,
             temperature=request.temperature,
             top_p=request.top_p,
-            stop=["<|im_end|>", "<|im_start|>"] + request.stop,
+            stop=["User:", "System:"] + request.stop,
             echo=False
         )
 
@@ -85,20 +85,21 @@ async def chat(request: ChatRequest):
     try:
         model = load_model()
 
-        # Build conversation prompt
-        conversation = "<|im_start|>system\nYou are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job search guidance.<|im_end|>\n"
+        # Build conversation prompt - simplified format
+        conversation = "System: You are a career counselor and recruitment expert. Provide helpful career advice, resume tips, and job search guidance.\n\n"
 
         for message in request.messages:
-            conversation += f"<|im_start|>{message.role}\n{message.content}<|im_end|>\n"
+            role = message.role.capitalize()
+            conversation += f"{role}: {message.content}\n\n"
 
-        conversation += "<|im_start|>assistant\n"
+        conversation += "Assistant:"
 
         response = model(
             conversation,
             max_tokens=request.max_tokens,
             temperature=request.temperature,
             top_p=request.top_p,
-            stop=["<|im_end|>", "<|im_start|>"],
+            stop=["User:", "System:"],
             echo=False
         )
 
