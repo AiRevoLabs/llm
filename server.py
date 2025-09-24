@@ -68,7 +68,8 @@ async def generate(request: GenerateRequest):
             max_tokens=request.max_tokens,
             temperature=request.temperature,
             top_p=request.top_p,
-            stop=["User:", "System:"] + request.stop,
+            stop=["User:", "System:", "#"] + request.stop,
+            repeat_penalty=1.1,
             echo=False
         )
 
@@ -99,7 +100,8 @@ async def chat(request: ChatRequest):
             max_tokens=request.max_tokens,
             temperature=request.temperature,
             top_p=request.top_p,
-            stop=["User:", "System:"],
+            stop=["User:", "System:", "#"],
+            repeat_penalty=1.1,
             echo=False
         )
 
