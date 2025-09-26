@@ -34,13 +34,25 @@ def load_model():
     if llm is None:
         print("🔄 Loading GGUF model...")
         try:
+            # Optimize for high-memory system (32GB available)
+            import multiprocessing
+            cpu_count = multiprocessing.cpu_count()
+
             llm = Llama(
                 model_path="/app/model/qwen-career.gguf",
-                n_ctx=2048,
-                n_threads=4,
-                verbose=False
+                n_ctx=8192,  # Increased context window for longer conversations
+                n_threads=min(cpu_count, 16),  # Use more CPU threads for parallel processing
+                n_batch=1024,  # Large batch size for faster prompt processing
+                use_mmap=True,  # Memory-map the model file
+                use_mlock=True,  # Lock model in memory to prevent swapping
+                verbose=False,
+                # High-memory optimizations
+                rope_freq_base=10000.0,  # RoPE frequency base for better context handling
+                rope_freq_scale=1.0,  # RoPE frequency scaling
             )
             print("✅ GGUF model loaded successfully")
+            print(f"📊 Using {cpu_count} CPU cores, max threads: {min(cpu_count, 16)}")
+            print(f"🧠 Context window: 8192 tokens, Batch size: 1024")
         except Exception as e:
             print(f"❌ Error loading model: {e}")
             raise HTTPException(status_code=500, detail=f"Failed to load model: {e}")
@@ -70,7 +82,10 @@ async def generate(request: GenerateRequest):
             top_p=request.top_p,
             stop=["User:", "System:", "#"] + request.stop,
             repeat_penalty=1.1,
-            echo=False
+            echo=False,
+            # High-performance generation settings
+            threads=min(cpu_count, 16),  # Use more threads for generation
+            batch_size=1024  # Large batch for faster processing
         )
 
         return {
@@ -102,7 +117,10 @@ async def chat(request: ChatRequest):
             top_p=request.top_p,
             stop=["User:", "System:", "#"],
             repeat_penalty=1.1,
-            echo=False
+            echo=False,
+            # High-performance generation settings
+            threads=min(cpu_count, 16),  # Use more threads for generation
+            batch_size=1024  # Large batch for faster processing
         )
 
         return {
