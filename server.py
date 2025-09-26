@@ -83,10 +83,7 @@ async def generate(request: GenerateRequest):
             top_p=request.top_p,
             stop=["User:", "System:", "#"] + request.stop,
             repeat_penalty=1.1,
-            echo=False,
-            # High-performance generation settings
-            threads=min(CPU_COUNT, 16),  # Use more threads for generation
-            batch_size=1024  # Large batch for faster processing
+            echo=False
         )
 
         return {
@@ -118,10 +115,7 @@ async def chat(request: ChatRequest):
             top_p=request.top_p,
             stop=["User:", "System:", "#"],
             repeat_penalty=1.1,
-            echo=False,
-            # High-performance generation settings
-            threads=min(CPU_COUNT, 16),  # Use more threads for generation
-            batch_size=1024  # Large batch for faster processing
+            echo=False
         )
 
         return {
