@@ -4,10 +4,6 @@ from pydantic import BaseModel
 from llama_cpp import Llama
 import uvicorn
 import json
-import multiprocessing
-
-# Get CPU count at module level
-CPU_COUNT = multiprocessing.cpu_count()
 
 app = FastAPI()
 
@@ -38,22 +34,13 @@ def load_model():
     if llm is None:
         print("🔄 Loading GGUF model...")
         try:
-            # Optimize for high-memory system (32GB available)
             llm = Llama(
                 model_path="/app/model/qwen-career.gguf",
-                n_ctx=8192,  # Increased context window for longer conversations
-                n_threads=min(CPU_COUNT, 16),  # Use more CPU threads for parallel processing
-                n_batch=1024,  # Large batch size for faster prompt processing
-                use_mmap=True,  # Memory-map the model file
-                use_mlock=True,  # Lock model in memory to prevent swapping
-                verbose=False,
-                # High-memory optimizations
-                rope_freq_base=10000.0,  # RoPE frequency base for better context handling
-                rope_freq_scale=1.0,  # RoPE frequency scaling
+                n_ctx=2048,
+                n_threads=4,
+                verbose=False
             )
             print("✅ GGUF model loaded successfully")
-            print(f"📊 Using {CPU_COUNT} CPU cores, max threads: {min(CPU_COUNT, 16)}")
-            print(f"🧠 Context window: 8192 tokens, Batch size: 1024")
         except Exception as e:
             print(f"❌ Error loading model: {e}")
             raise HTTPException(status_code=500, detail=f"Failed to load model: {e}")
